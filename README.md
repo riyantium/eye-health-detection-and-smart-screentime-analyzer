@@ -67,9 +67,9 @@ python api.py
 
 ## Project Structure
 
-api.py → backend server
-fatigue.py → fatigue detection logic
-ocular.py → eye analysis
-ml.py → machine learning model
-index.html → frontend
+- api.py → backend server 
+- fatigue.py → fatigue detection logic 
+- ocular.py → eye analysis \n
+- ml.py → machine learning model 
+- index.html → frontend 
 
