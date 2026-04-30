@@ -16,7 +16,7 @@ import tempfile
 
 app = Flask(__name__)
 CORS(app)
-# ─── CORS ─────────────────────────────────────────────────────────────────────
+# CORS 
 CORS(app, resources={r"/api/*": {
     "origins": "*",
     "methods": ["GET", "POST", "DELETE", "OPTIONS"],
@@ -40,7 +40,7 @@ def handle_options(path):
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,DELETE,OPTIONS'
     return response
 
-# ─── LAZY IMPORTS ─────────────────────────────────────────────────────────────
+# LAZY IMPORTS 
 def try_import_extract():
     try:
         from extract import is_running, get_events, get_daily_totals, get_app_totals
@@ -151,7 +151,7 @@ SYSTEM_APPS = {
 }
 
 
-# ─── PROFILES ─────────────────────────────────────────────────────────────────
+#  PROFILES 
 
 def load_profiles():
     if os.path.exists(PROFILES_FILE):
@@ -220,7 +220,7 @@ def delete_profile(name):
         return jsonify({"error": str(e)}), 500
 
 
-# ─── FILE PARSING ─────────────────────────────────────────────────────────────
+# FILE PARSING 
 
 def extract_hour(timestamp):
     try:
@@ -449,7 +449,7 @@ def build_response(df, days):
     }
 
 
-# ─── ROUTES ───────────────────────────────────────────────────────────────────
+# ROUTES 
 
 @app.route("/api/status")
 def status():
@@ -566,7 +566,7 @@ def compare():
         return jsonify({"error": str(e)}), 500
 
 
-# ─── DATA EXPORT ──────────────────────────────────────────────────────────────
+# DATA EXPORT 
 
 @app.route("/api/export_csv", methods=["POST"])
 def export_csv():
@@ -608,7 +608,7 @@ def export_csv():
         return jsonify({"error": str(e)}), 500
 
 
-# ─── PDF EXPORT ───────────────────────────────────────────────────────────────
+# PDF EXPORT 
 
 @app.route("/api/export_pdf", methods=["POST"])
 def export_pdf():
@@ -699,7 +699,7 @@ def export_pdf():
         story.append(t)
         story.append(Spacer(1, 16))
 
-        # ─── OCULAR HEALTH ─────────────────────────────
+        # OCULAR HEALTH 
         story.append(Paragraph("Ocular Health Analysis", h2_style))
 
         ocular_data = [
@@ -806,7 +806,7 @@ def export_pdf():
         return jsonify({"error": str(e)}), 500
 
 
-# ─── FATIGUE ──────────────────────────────────────────────────────────────────
+# FATIGUE 
 
 @app.route("/api/fatigue", methods=["POST"])
 def fatigue():
@@ -838,10 +838,7 @@ def fatigue():
         return jsonify({"error": str(e)}), 500
 
 
-# ─── OCULAR HEALTH ────────────────────────────────────────────────────────────
-# FIX: removed duplicate route definition that was causing Flask AssertionError
-# FIX: removed dead ocular_health() route that was placed after app.run()
-
+# OCULAR HEALTH 
 @app.route("/api/ocular", methods=["POST"])
 def ocular():
     try:
@@ -850,7 +847,6 @@ def ocular():
         if not up:
             return jsonify({"error": "Missing 'video' file upload"}), 400
 
-        # FIX: validate and safely parse numeric params
         try:
             screen_time_hours = float(request.form.get("screen_time_hours", 0.0) or 0.0)
         except (ValueError, TypeError):
@@ -861,8 +857,6 @@ def ocular():
         except (ValueError, TypeError):
             focal_px = 600.0
 
-        # FIX: preserve the original .webm extension — do NOT force .mp4
-        # OpenCV on Windows can fail to decode .webm renamed to .mp4
         suffix = os.path.splitext(up.filename or "")[1].lower()
         if suffix not in {".webm", ".mp4", ".mov", ".avi", ".mkv"}:
             suffix = ".webm"
@@ -878,7 +872,6 @@ def ocular():
                 focal_px=focal_px,
                 screen_time_hours=screen_time_hours,
             )
-            # Ensure result is a dict (stub or real)
             if not isinstance(result, dict):
                 result = {"error": "Unexpected result format from ocular module."}
             return jsonify(result)
@@ -893,15 +886,14 @@ def ocular():
         return jsonify({"error": str(e)}), 500
 
 
-# ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+# HEALTH CHECK 
 
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
 
 
-# ─── ENTRY POINT ──────────────────────────────────────────────────────────────
-# FIX: app.run() is the LAST thing in the file — nothing after it ever executes
+# ENTRY POINT
 
 if __name__ == "__main__":
     print("=" * 50)
