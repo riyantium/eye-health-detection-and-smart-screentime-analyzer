@@ -15,7 +15,7 @@ from dateutil import parser
 AW_BASE = "http://localhost:5600/api/0"
 
 
-# ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+# HEALTH CHECK 
 
 def is_running():
     try:
@@ -25,7 +25,7 @@ def is_running():
         return False
 
 
-# ─── FETCH BUCKETS ────────────────────────────────────────────────────────────
+# FETCH BUCKETS 
 
 def get_buckets():
     try:
@@ -36,7 +36,7 @@ def get_buckets():
         return {}
 
 
-# ─── CORE EXTRACTION ──────────────────────────────────────────────────────────
+#  CORE EXTRACTION 
 
 def get_events(days=7):
     """
@@ -46,7 +46,6 @@ def get_events(days=7):
 
     buckets = get_buckets()
 
-    # 🔥 FIX 1: collect ALL window buckets
     window_buckets = [
         b for b in buckets
         if "window" in b.lower()
@@ -61,7 +60,6 @@ def get_events(days=7):
 
     all_events = []
 
-    # 🔥 FIX 2: fetch ALL buckets
     for bucket in window_buckets:
         try:
             r = requests.get(
@@ -88,7 +86,7 @@ def get_events(days=7):
     if not all_events:
         return empty_df()
 
-    # ─── PROCESS EVENTS ──────────────────────────────────────────────────────
+    # PROCESS EVENTS 
 
     rows = []
 
@@ -108,7 +106,6 @@ def get_events(days=7):
         if duration <= 0 or not timestamp:
             continue
 
-        # 🔥 FIX 3: proper timestamp parsing
         try:
             dt = parser.isoparse(timestamp).astimezone()
             date = dt.date().isoformat()
@@ -128,7 +125,7 @@ def get_events(days=7):
 
     df = pd.DataFrame(rows)
 
-    # ─── CLEANING ────────────────────────────────────────────────────────────
+    # CLEANING 
 
     df = df[df["minutes"] > 0]
 
@@ -144,7 +141,7 @@ def get_events(days=7):
     return df
 
 
-# ─── AGGREGATIONS ────────────────────────────────────────────────────────────
+# AGGREGATIONS 
 
 def get_daily_totals(df):
     if df.empty:
@@ -171,7 +168,7 @@ def get_app_totals(df):
     )
 
 
-# ─── HELPERS ─────────────────────────────────────────────────────────────────
+# HELPERS 
 
 def empty_df():
     return pd.DataFrame(columns=["date", "app", "minutes", "hour"])
