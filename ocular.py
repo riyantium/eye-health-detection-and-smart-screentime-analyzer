@@ -65,7 +65,7 @@ logging.basicConfig(
 )
 _log = logging.getLogger("ocular")
 
-# ─── Optional MediaPipe import (graceful fallback) ────────────────────────────
+# Optional MediaPipe import (graceful fallback) 
 try:
     import mediapipe as mp
     from mediapipe.tasks import python as _mp_python
@@ -74,10 +74,7 @@ try:
 except ImportError:
     _MP_AVAILABLE = False
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# §0  Low-level geometry helpers
-# ══════════════════════════════════════════════════════════════════════════════
+#  Low-level geometry helpers
 
 def _dist(p1: Sequence[float], p2: Sequence[float]) -> float:
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
@@ -89,11 +86,8 @@ def _safe_div(numerator: float, denominator: float, fallback: float = 0.0) -> fl
 
 def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# §0b  Low-light Enhancement
-# ══════════════════════════════════════════════════════════════════════════════
+  
+#   Low-light Enhancement
 
 _LUT_CACHE: Dict[float, np.ndarray] = {}
 
@@ -128,9 +122,7 @@ def _enhance_low_light(frame_bgr: np.ndarray) -> np.ndarray:
     return enhanced_bgr
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # §0c  FIX Bug 5 — Robust model path resolution
-# ══════════════════════════════════════════════════════════════════════════════
 
 _MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/"
@@ -208,9 +200,7 @@ def _find_or_download_model() -> str:
         ) from exc
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# §0d  FIX Bug 6 — WebM / codec-safe video reader
-# ══════════════════════════════════════════════════════════════════════════════
+#  FIX Bug 6 — WebM / codec-safe video reader
 
 def _open_video_capture(video_path: str) -> Tuple[Optional[cv2.VideoCapture], float, int]:
     """
@@ -276,10 +266,7 @@ def _open_video_capture(video_path: str) -> Tuple[Optional[cv2.VideoCapture], fl
         _log.warning("Transcode attempt raised: %s", e)
         return None, 0.0, 0
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# §1  Module 1 — Blink Dynamics
-# ══════════════════════════════════════════════════════════════════════════════
+#  Module 1 — Blink Dynamics
 
 _LEFT_EYE_IDX: Tuple[int, ...] = (33, 160, 158, 133, 153, 144)
 _RIGHT_EYE_IDX: Tuple[int, ...] = (362, 385, 387, 263, 373, 380)
@@ -340,7 +327,7 @@ class BlinkSession:
         # Robust minimum (closed eye approx)
         min_ear = np.percentile(recent_ears, 10)
 
-        # 🔥 KEY FIX: dynamic gap-based thresholds
+        #  KEY FIX: dynamic gap-based thresholds
         ear_range = baseline - min_ear
 
         # If range too small → fallback (camera noise case)
@@ -412,10 +399,7 @@ class BlinkSession:
         total = self.complete_blinks + self.partial_blinks
         return round(_safe_div(self.partial_blinks, total), 3)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# §2  Module 2 — Metric Distance Estimation
-# ══════════════════════════════════════════════════════════════════════════════
+#  Module 2 — Metric Distance Estimation
 
 _IRIS_PHYSICAL_MM: float = 11.7
 
@@ -470,9 +454,7 @@ class IrisDistanceEstimator:
         )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# §3  Module 3 — Ocular Surface & Behavioural Analysis
-# ══════════════════════════════════════════════════════════════════════════════
+#  Module 3 — Ocular Surface & Behavioural Analysis
 
 class ScleralRednessAnalyzer:
     _LEFT_SCLERA_IDX: Tuple[int, int, int, int]  = (33, 133, 159, 145)
@@ -626,10 +608,7 @@ class TwentyTwentyTwentyTracker:
     def total_screen_time_sec(self) -> float:
         return sum(self._screen_segments_sec)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# §4  Module 4 — Risk Stratification Engine (EyeScore)
-# ══════════════════════════════════════════════════════════════════════════════
+#  Module 4 — Risk Stratification Engine (EyeScore)
 
 @dataclass
 class OcularMetrics:
@@ -669,7 +648,7 @@ class EyeScoreEngine:
         score = 0.0
         breakdown: Dict[str, float] = {}
 
-        # ── 1. Blink rate (weight 2.5) ──────────────────────────────────────
+        # 1. Blink rate (weight 2.5) 
         if m.blink_rate_per_min is not None:
             br = m.blink_rate_per_min
             if br < 5:
@@ -685,7 +664,7 @@ class EyeScoreEngine:
         breakdown["blink_rate"] = round(blink_risk, 3)
         score += blink_risk
 
-        # ── 2. Partial blink ratio (weight 2.0) ─────────────────────────────
+        # 2. Partial blink ratio (weight 2.0) 
         pbr = m.partial_blink_ratio
         if pbr >= 0.6:
             partial_risk = 2.0
@@ -698,7 +677,7 @@ class EyeScoreEngine:
         breakdown["partial_blink"] = round(partial_risk, 3)
         score += partial_risk
 
-        # ── 3. Redness (weight 2.0) ──────────────────────────────────────────
+        # 3. Redness (weight 2.0) 
         if m.avg_redness is not None:
             redness_risk = _clamp(m.avg_redness * 2.0, 0.0, 2.0)
         else:
@@ -706,7 +685,7 @@ class EyeScoreEngine:
         breakdown["redness"] = round(redness_risk, 3)
         score += redness_risk
 
-        # ── 4. Screen distance (weight 1.5) ─────────────────────────────────
+        #  4. Screen distance (weight 1.5) 
         if m.avg_distance_cm is not None:
             d = m.avg_distance_cm
             if d < 30:
@@ -724,14 +703,14 @@ class EyeScoreEngine:
         breakdown["distance"] = round(dist_risk, 3)
         score += dist_risk
 
-        # ── 5. Squint / Vision-Autocorrect (weight 1.0) ─────────────────────
+        # 5. Squint / Vision-Autocorrect (weight 1.0) 
         squint_risk = _clamp(m.squint_count / 50.0, 0.0, 1.0)
         if m.autocorrect_triggered:
             squint_risk = min(1.0, squint_risk + 0.3)
         breakdown["squint"] = round(squint_risk, 3)
         score += squint_risk
 
-        # ── 6. Screen time context (weight 1.0) ─────────────────────────────
+        # 6. Screen time context (weight 1.0) 
         sh = m.screen_time_hours
         if sh >= 10:
             st_risk = 1.0
@@ -862,9 +841,7 @@ class EyeScoreEngine:
         return recs
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # §5  Main pipeline — analyze_video_ocular()
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _all_landmark_xy_from_tasks(
     face_landmarks,
@@ -904,7 +881,7 @@ def analyze_video_ocular(
             screen_time_hours=screen_time_hours,
         )
 
-    # ── FIX Bug 5: robust model loading ─────────────────────────────────────
+    # FIX Bug 5: robust model loading 
     try:
         model_path = _find_or_download_model()
     except RuntimeError as exc:
@@ -914,7 +891,7 @@ def analyze_video_ocular(
             screen_time_hours=screen_time_hours,
         )
 
-    # ── FIX Bug 6: codec-safe video open ────────────────────────────────────
+    #  FIX Bug 6: codec-safe video open 
     cap, fps, _ = _open_video_capture(video_path)
     if cap is None:
         return _stub_response(
@@ -927,7 +904,8 @@ def analyze_video_ocular(
 
     max_frames: int = int(max_seconds * fps)
 
-    # ── Initialise all modules ───────────────────────────────────────────────
+    #  Initialise all modules 
+  
     blink_session      = BlinkSession()
     distance_estimator = IrisDistanceEstimator(focal_px=focal_px)
     redness_analyzer   = ScleralRednessAnalyzer()
@@ -935,7 +913,7 @@ def analyze_video_ocular(
     gaze_tracker       = TwentyTwentyTwentyTracker()
     eye_score_engine   = EyeScoreEngine()
 
-    # ── Build MediaPipe FaceLandmarker ───────────────────────────────────────
+    # Build MediaPipe FaceLandmarker
     try:
         base_options = _mp_python.BaseOptions(model_asset_path=model_path)
         landmarker_options = _mp_vision.FaceLandmarkerOptions(
@@ -1129,9 +1107,7 @@ def analyze_video_ocular(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # §6  Stub / fallback response
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _stub_response(
     error: str = "",
@@ -1174,9 +1150,7 @@ def _stub_response(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # §7  CLI self-test
-# ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     import json
