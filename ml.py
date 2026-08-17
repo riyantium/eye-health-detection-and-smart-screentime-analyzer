@@ -84,7 +84,7 @@ def get_category_breakdown(app_df):
     return app_df.groupby("category")["minutes"].sum().reset_index().sort_values("minutes", ascending=False)
 
 
-# ─── TRAIN MODEL ──────────────────────────────────────────────────────────────
+# TRAINING MODEL --------------------------
 
 def train_model():
     if not os.path.exists(KAGGLE_PATH):
@@ -113,7 +113,7 @@ def train_model():
 _model, _le, _features = train_model()
 
 
-# ─── RULE-BASED FALLBACK ──────────────────────────────────────────────────────
+# RULE BASED FALLBACK ------------
 
 def rule_based_addiction(usage_per_day_mins, social_media_mins, eye_health_sensitive=False):
     u = usage_per_day_mins * (EYE_HEALTH_USAGE_MULTIPLIER if eye_health_sensitive else 1.0)
@@ -141,7 +141,7 @@ def _merge_addiction_tips(level, eye_health_sensitive):
     return base
 
 
-# ─── ADDICTION PREDICTION ─────────────────────────────────────────────────────
+#ADDICTION PREDICTION -----------
 
 def predict_addiction(usage_per_day_mins, num_apps, social_media_mins, eye_health_sensitive=False):
     u_for_model = usage_per_day_mins * (EYE_HEALTH_USAGE_MULTIPLIER if eye_health_sensitive else 1.0)
@@ -183,7 +183,7 @@ def suggested_daily_cap_minutes(eye_health_sensitive=False):
     return 150 if eye_health_sensitive else 240
 
 
-# ─── DATE PARSING HELPER ──────────────────────────────────────────────────────
+# DATE PRAISING HELPER -------
 
 def safe_parse_dates(daily_df):
     """
@@ -207,7 +207,6 @@ def safe_parse_dates(daily_df):
     except Exception:
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
-    # Drop rows where date could not be parsed
     df = df.dropna(subset=["date"])
 
     if df.empty:
@@ -222,7 +221,7 @@ def safe_parse_dates(daily_df):
     return df
 
 
-# ─── FORECAST ─────────────────────────────────────────────────────────────────
+# FORECAST ------------
 
 def predict_week(daily_df):
     """
@@ -407,7 +406,7 @@ def predict_tomorrow(daily_df):
     return week[0]["minutes"], "Linear Regression", accuracy
 
 
-# ─── ANOMALY DETECTION ────────────────────────────────────────────────────────
+#ANOMALY DETECTION -------
 
 def detect_anomalies(daily_df):
     df = daily_df.copy()
@@ -421,7 +420,7 @@ def detect_anomalies(daily_df):
     return df
 
 
-# ─── INSIGHTS ─────────────────────────────────────────────────────────────────
+#INSIGHTS -------
 
 def get_insights(daily_df, app_df):
     insights = []
@@ -467,7 +466,7 @@ def get_social_media_mins(app_df):
     return total
 
 
-# ─── SLEEP IMPACT ─────────────────────────────────────────────────────────────
+#SLEEP IMPACT-------------------------------
 
 LATE_NIGHT_HOURS = {22, 23, 0, 1, 2}
 
